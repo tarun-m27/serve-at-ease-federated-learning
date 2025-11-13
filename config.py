@@ -2,23 +2,27 @@ import os
 from datetime import timedelta
 
 class Config:
-    """Application configuration for local (MySQL) and production (PostgreSQL)"""
+    """App configuration supporting three modes:
+    - PostgreSQL when DATABASE_URL is set (production)
+    - MySQL only when explicitly requested via USE_MYSQL=1 (local/XAMPP)
+    - SQLite fallback by default (no external DB required)
+    """
 
     # Secret key for session management
     SECRET_KEY = os.environ.get('SESSION_SECRET', 'dev-secret-key-change-in-production')
 
-    # Database configuration - supports both PostgreSQL (Render) and MySQL (local)
-    # Render provides DATABASE_URL environment variable for PostgreSQL
+    # Database configuration
     DATABASE_URL = os.environ.get('DATABASE_URL')
-    
+    USE_MYSQL = os.environ.get('USE_MYSQL', '0') == '1'
+
     if DATABASE_URL:
-        # Production: Use PostgreSQL from Render
-        # Render uses 'postgres://' but SQLAlchemy needs 'postgresql://'
+        # Production: Use PostgreSQL-style URL
+        # Some providers use 'postgres://' but SQLAlchemy expects 'postgresql://'
         if DATABASE_URL.startswith('postgres://'):
             DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
         SQLALCHEMY_DATABASE_URI = DATABASE_URL
-    else:
-        # Local development: Use MySQL with XAMPP
+    elif USE_MYSQL:
+        # Explicit MySQL (requires PyMySQL installed)
         MYSQL_HOST = os.environ.get('MYSQL_HOST', 'localhost')
         MYSQL_PORT = os.environ.get('MYSQL_PORT', '3306')
         MYSQL_USER = os.environ.get('MYSQL_USER', 'root')
@@ -27,6 +31,11 @@ class Config:
         SQLALCHEMY_DATABASE_URI = (
             f"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DATABASE}"
         )
+    else:
+        # Default: SQLite file (no external DB). Path lives in the repo directory.
+        base_dir = os.path.abspath(os.path.dirname(__file__))
+        sqlite_path = os.path.join(base_dir, 'serve_at_ease.db')
+        SQLALCHEMY_DATABASE_URI = f"sqlite:///{sqlite_path}"
 
     # SQLAlchemy settings
     SQLALCHEMY_TRACK_MODIFICATIONS = False
