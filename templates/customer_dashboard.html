@@ -1,0 +1,344 @@
+{% extends "base.html" %}
+
+{% block title %}Customer Dashboard - Serve at Ease{% endblock %}
+
+{% block content %}
+<h1 class="mb-4"><i class="bi bi-person-circle"></i> Customer Dashboard</h1>
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card stat-card primary shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title text-muted">Total Bookings</h5>
+                <h2 class="mb-0">{{ bookings|length }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stat-card success shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title text-muted">Your Trust Score</h5>
+                <h2 class="mb-0">{{ trust_score.overall_score if trust_score else 50 }}/100</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stat-card warning shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title text-muted">Available Plumbers</h5>
+                <h2 class="mb-0">{{ plumbers|length }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if trust_score %}
+<div class="card mb-4 shadow-sm">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="bi bi-shield-check"></i> Your Trust Score Details</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-2 text-center">
+                <div class="trust-score-badge {% if trust_score.overall_score >= 80 %}trust-excellent{% elif trust_score.overall_score >= 60 %}trust-good{% elif trust_score.overall_score >= 40 %}trust-fair{% elif trust_score.overall_score >= 20 %}trust-poor{% else %}trust-very-low{% endif %}">
+                    {{ trust_score.overall_score|round|int }}
+                </div>
+            </div>
+            <div class="col-md-10">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Completion Rate</label>
+                        <div class="progress">
+                            <div class="progress-bar bg-success" style="width: {{ trust_score.completion_rate }}%">{{ trust_score.completion_rate|round(1) }}%</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Review Authenticity</label>
+                        <div class="progress">
+                            <div class="progress-bar bg-info" style="width: {{ trust_score.review_authenticity }}%">{{ trust_score.review_authenticity|round(1) }}%</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Response Time Score</label>
+                        <div class="progress">
+                            <div class="progress-bar bg-primary" style="width: {{ trust_score.response_time_score }}%">{{ trust_score.response_time_score|round(1) }}%</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Total Transactions</label>
+                        <h5 class="mb-0">{{ trust_score.total_transactions }}</h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="card mb-4 shadow-sm">
+    <div class="card-header bg-success text-white">
+        <h5 class="mb-0"><i class="bi bi-search"></i> Find Plumbers</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            {% for plumber in plumbers[:6] %}
+            <div class="col-md-6 mb-3">
+                <div class="plumber-card p-3">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h5 class="mb-1">{{ plumber.user.name }}</h5>
+                            <p class="text-muted mb-2">{{ plumber.specialty }}</p>
+                            <p class="mb-1"><i class="bi bi-geo-alt"></i> {{ plumber.location }}</p>
+                            <p class="mb-0"><i class="bi bi-briefcase"></i> {{ plumber.experience_years }} years experience</p>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge badge-rate bg-primary">${{ plumber.hourly_rate }}/hr</span>
+                            {% if plumber.trust_score and plumber.trust_score.overall_score < 40 %}
+                            <br><span class="badge bg-danger mt-1"><i class="bi bi-exclamation-triangle"></i> Low Trust</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% set fraud_alerts = namespace(found=False) %}
+                    {% for alert in plumber.user.fraud_alerts %}
+                        {% if alert.plumber_id == plumber.id and alert.status == 'pending' %}
+                            {% set fraud_alerts.found = True %}
+                        {% endif %}
+                    {% endfor %}
+                    {% if fraud_alerts.found %}
+                    <div class="alert alert-warning p-2 mt-2 mb-2 small">
+                        <i class="bi bi-shield-exclamation"></i> <strong>Fraud Alert:</strong> This plumber has suspicious activity. Book with caution.
+                    </div>
+                    {% endif %}
+                    <button class="btn btn-sm btn-outline-primary w-100 mt-3" onclick="bookPlumber({{ plumber.id }}, '{{ plumber.user.name }}')">
+                        <i class="bi bi-calendar-check"></i> Book Service
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-info text-white">
+        <h5 class="mb-0"><i class="bi bi-clock-history"></i> Your Bookings</h5>
+    </div>
+    <div class="card-body">
+        {% if bookings %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Plumber</th>
+                        <th>Service</th>
+                        <th>Scheduled</th>
+                        <th>Status</th>
+                        <th>Price</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for booking in bookings %}
+                    <tr>
+                        <td>#{{ booking.id }}</td>
+                        <td>{{ booking.plumber.user.name }}</td>
+                        <td>{{ booking.service_description[:50] }}...</td>
+                        <td>{{ booking.scheduled_date|to_ist }}</td>
+                        <td><span class="badge booking-status-{{ booking.status }}">{{ booking.status.upper() }}</span></td>
+                        <td>${{ booking.price }}</td>
+                        <td>
+                            {% if booking.status == 'completed' and not booking.rating %}
+                                <button class="btn btn-primary btn-sm" onclick="openReviewModal({{ booking.id }})">
+                                  <i class="bi bi-star-fill"></i> Leave Review
+                                </button>
+                            {% elif booking.status in ['pending', 'accepted'] %}
+                                <button class="btn btn-danger btn-sm" onclick="cancelBooking({{ booking.id }}, '{{ booking.status }}')">
+                                  <i class="bi bi-x-circle"></i> Cancel Booking
+                                </button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-center text-muted mb-0">No bookings yet. Book a plumber to get started!</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Review Modal -->
+<div class="modal fade" id="reviewModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Rate & Review Service</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="reviewBookingId">
+                <div class="mb-3">
+                    <label class="form-label">Rating</label>
+                    <div class="star-rating">
+                        <i class="bi bi-star" data-rating="1"></i>
+                        <i class="bi bi-star" data-rating="2"></i>
+                        <i class="bi bi-star" data-rating="3"></i>
+                        <i class="bi bi-star" data-rating="4"></i>
+                        <i class="bi bi-star" data-rating="5"></i>
+                    </div>
+                    <input type="hidden" id="ratingValue" value="0">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Review</label>
+                    <textarea class="form-control" id="reviewText" rows="4" placeholder="Share your experience..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="submitReview()">Submit Review</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Star rating interaction
+document.addEventListener('DOMContentLoaded', function() {
+    const stars = document.querySelectorAll('.star-rating i');
+    stars.forEach(star => {
+        star.addEventListener('click', function() {
+            const rating = this.getAttribute('data-rating');
+            document.getElementById('ratingValue').value = rating;
+            stars.forEach(s => {
+                if (s.getAttribute('data-rating') <= rating) {
+                    s.classList.remove('bi-star');
+                    s.classList.add('bi-star-fill');
+                } else {
+                    s.classList.remove('bi-star-fill');
+                    s.classList.add('bi-star');
+                }
+            });
+        });
+    });
+});
+
+function bookPlumber(plumberId, plumberName) {
+    const serviceDescription = prompt(`Enter service description for ${plumberName}:`);
+    if (!serviceDescription) return;
+
+    const price = prompt('Enter estimated price ($):');
+    if (!price) return;
+
+    const scheduledDate = prompt('Enter scheduled date (YYYY-MM-DD HH:MM):');
+    if (!scheduledDate) return;
+
+    fetch('/api/bookings/create', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            plumber_id: plumberId,
+            service_description: serviceDescription,
+            price: parseFloat(price),
+            scheduled_date: scheduledDate
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Booking created successfully!');
+            if (data.fraud_check && data.fraud_check.risk_score > 60) {
+                alert('Warning: Fraud detection flagged this booking with risk score: ' + data.fraud_check.risk_score);
+            }
+            location.reload();
+        } else {
+            alert('Error creating booking: ' + data.message);
+        }
+    });
+}
+
+function openReviewModal(bookingId) {
+    document.getElementById('reviewBookingId').value = bookingId;
+    document.getElementById('ratingValue').value = 0;
+    document.getElementById('reviewText').value = '';
+
+    // Reset stars
+    document.querySelectorAll('.star-rating i').forEach(s => {
+        s.classList.remove('bi-star-fill');
+        s.classList.add('bi-star');
+    });
+
+    const modal = new bootstrap.Modal(document.getElementById('reviewModal'));
+    modal.show();
+}
+
+function submitReview() {
+      const bookingId = document.getElementById('reviewBookingId').value;
+      const rating = document.getElementById('ratingValue').value;
+      const review = document.getElementById('reviewText').value;
+
+      if (!rating || parseInt(rating) === 0) {
+        alert('Please select a rating');
+        return;
+      }
+
+      if (!review.trim()) {
+        alert('Please write a review');
+        return;
+      }
+
+      fetch(`/api/bookings/${bookingId}/review`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ rating: parseInt(rating), review: review })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert(data.message);
+          location.reload();
+        } else {
+          alert(data.message);
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to submit review');
+      });
+    }
+
+    function cancelBooking(bookingId, status) {
+      let confirmMsg = 'Are you sure you want to cancel this booking?';
+      if (status === 'accepted') {
+        confirmMsg += '\n\nWarning: The plumber has already accepted this booking. Cancelling now will reduce your trust score.';
+      }
+
+      if (!confirm(confirmMsg)) {
+        return;
+      }
+
+      fetch(`/api/bookings/${bookingId}/cancel`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert(data.message);
+          location.reload();
+        } else {
+          alert(data.message);
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to cancel booking');
+      });
+    }
+  </script>
+{% endblock %}

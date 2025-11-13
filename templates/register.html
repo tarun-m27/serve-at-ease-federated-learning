@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Register - Serve at Ease{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-body p-5">
+                <h2 class="text-center mb-4">
+                    <i class="bi bi-person-plus text-primary"></i> Create Account
+                </h2>
+                <form method="POST" id="registerForm">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Full Name</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email Address</label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="password" name="password" required minlength="6">
+                    </div>
+                    <div class="mb-3">
+                        <label for="role" class="form-label">I am a...</label>
+                        <select class="form-select" id="role" name="role" required>
+                            <option value="">Select your role</option>
+                            <option value="customer">Customer (Looking for plumbing services)</option>
+                            <option value="plumber">Plumber (Offering plumbing services)</option>
+                        </select>
+                    </div>
+                    
+                    <div id="plumberFields" style="display: none;">
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i> Additional information for plumber registration
+                        </div>
+                        <div class="mb-3">
+                            <label for="specialty" class="form-label">Specialty</label>
+                            <input type="text" class="form-control" id="specialty" name="specialty" placeholder="e.g., Residential Plumbing, Commercial Plumbing">
+                        </div>
+                        <div class="mb-3">
+                            <label for="location" class="form-label">Location</label>
+                            <input type="text" class="form-control" id="location" name="location" placeholder="e.g., Bengaluru, Karnataka">
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="hourly_rate" class="form-label">Hourly Rate ($)</label>
+                                <input type="number" class="form-control" id="hourly_rate" name="hourly_rate" min="10" max="500" value="50">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="experience_years" class="form-label">Years of Experience</label>
+                                <input type="number" class="form-control" id="experience_years" name="experience_years" min="0" max="50" value="1">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-person-plus"></i> Register
+                    </button>
+                </form>
+                <hr class="my-4">
+                <p class="text-center mb-0">
+                    Already have an account? <a href="{{ url_for('login') }}">Login here</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('role').addEventListener('change', function() {
+        const plumberFields = document.getElementById('plumberFields');
+        if (this.value === 'plumber') {
+            plumberFields.style.display = 'block';
+            plumberFields.querySelectorAll('input').forEach(input => {
+                input.required = true;
+            });
+        } else {
+            plumberFields.style.display = 'none';
+            plumberFields.querySelectorAll('input').forEach(input => {
+                input.required = false;
+            });
+        }
+    });
+</script>
+{% endblock %}

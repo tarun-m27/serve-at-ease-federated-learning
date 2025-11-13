@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Serve at Ease{% endblock %}
+
+{% block content %}
+<div class="hero-section py-5 bg-light rounded mb-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1 class="display-4 fw-bold text-primary mb-3">
+                    <i class="bi bi-shield-lock-fill"></i> Serve at Ease
+                </h1>
+                <h2 class="h3 mb-4">An AI-Driven Federated Learning and Trust Scoring Framework for Service Platforms</h2>
+                <p class="lead mb-4">
+                    A privacy-first plumber booking platform that integrates federated learning with transparent 
+                    trust-scoring to mitigate data exposure, bias, and fraud while maintaining scalability.
+                </p>
+                <div class="d-flex gap-3">
+                    <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg">
+                        <i class="bi bi-person-plus"></i> Get Started
+                    </a>
+                    <a href="{{ url_for('login') }}" class="btn btn-outline-primary btn-lg">
+                        <i class="bi bi-box-arrow-in-right"></i> Login
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-4 text-center mt-4 mt-lg-0">
+                <i class="bi bi-cpu" style="font-size: 10rem; color: var(--bs-primary);"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <section class="mb-5">
+        <h2 class="text-center mb-4 fw-bold">Key Features</h2>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm border-primary">
+                    <div class="card-body text-center">
+                        <i class="bi bi-diagram-3 text-primary" style="font-size: 3rem;"></i>
+                        <h4 class="card-title mt-3">Federated Learning</h4>
+                        <p class="card-text">
+                            Decentralized model training on edge devices. Only encrypted model updates are shared, 
+                            never raw user data, ensuring privacy-preserving AI.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm border-success">
+                    <div class="card-body text-center">
+                        <i class="bi bi-shield-check text-success" style="font-size: 3rem;"></i>
+                        <h4 class="card-title mt-3">Trust Scoring</h4>
+                        <p class="card-text">
+                            Multi-factor trust analysis based on completion rates, review authenticity, 
+                            response time, and anomaly detection for transparent reputation.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm border-danger">
+                    <div class="card-body text-center">
+                        <i class="bi bi-exclamation-triangle text-danger" style="font-size: 3rem;"></i>
+                        <h4 class="card-title mt-3">Fraud Detection</h4>
+                        <p class="card-text">
+                            Real-time AI-powered fraud detection using anomaly detection algorithms to identify 
+                            fake bookings, price manipulation, and suspicious patterns.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="mb-5">
+        <h2 class="text-center mb-4 fw-bold">How It Works</h2>
+        <div class="row g-4">
+            <div class="col-md-3">
+                <div class="card h-100 bg-primary text-white">
+                    <div class="card-body text-center">
+                        <h1 class="display-4">1</h1>
+                        <h5>Data Locality</h5>
+                        <p class="small">Devices retain logs like bookings, ratings, and reviews locally to ensure privacy.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card h-100 bg-success text-white">
+                    <div class="card-body text-center">
+                        <h1 class="display-4">2</h1>
+                        <h5>Local Training</h5>
+                        <p class="small">Lightweight models learn on-device from behavioral data to identify patterns.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card h-100 bg-info text-white">
+                    <div class="card-body text-center">
+                        <h1 class="display-4">3</h1>
+                        <h5>Update Sharing</h5>
+                        <p class="small">Clients send encrypted model updates rather than raw records, reducing leakage risk.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card h-100 bg-warning text-dark">
+                    <div class="card-body text-center">
+                        <h1 class="display-4">4</h1>
+                        <h5>Global Aggregation</h5>
+                        <p class="small">Backend orchestrator aggregates updates and produces a refreshed global model.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="mb-5 bg-light p-5 rounded">
+        <h2 class="text-center mb-4 fw-bold">System Architecture</h2>
+        <div class="row">
+            <div class="col-md-6">
+                <h4><i class="bi bi-gear-fill text-primary"></i> Technologies</h4>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item"><strong>Backend:</strong> Python Flask</li>
+                    <li class="list-group-item"><strong>Database:</strong> PostgreSQL</li>
+                    <li class="list-group-item"><strong>AI/ML:</strong> Scikit-learn, NumPy, Pandas</li>
+                    <li class="list-group-item"><strong>Federated Learning:</strong> Custom FedAvg Implementation</li>
+                    <li class="list-group-item"><strong>Security:</strong> Encrypted updates, Session-based auth</li>
+                </ul>
+            </div>
+            <div class="col-md-6">
+                <h4><i class="bi bi-people-fill text-success"></i> User Roles</h4>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <strong>Customers:</strong> Search plumbers, book services, view trust scores
+                    </li>
+                    <li class="list-group-item">
+                        <strong>Plumbers:</strong> Manage services, accept bookings, build reputation
+                    </li>
+                    <li class="list-group-item">
+                        <strong>Admins:</strong> Monitor fraud alerts, manage federated models, view analytics
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <section class="text-center mb-5 py-5 bg-primary text-white rounded">
+        <h2 class="mb-4">Ready to Experience Privacy-First Service Booking?</h2>
+        <p class="lead mb-4">Join our platform and be part of the federated learning revolution</p>
+        <a href="{{ url_for('register') }}" class="btn btn-light btn-lg">
+            <i class="bi bi-rocket-takeoff"></i> Create Account Now
+        </a>
+    </section>
+</div>
+{% endblock %}

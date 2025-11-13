@@ -1,0 +1,587 @@
+
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - Serve at Ease{% endblock %}
+
+{% block content %}
+<h1 class="mb-4"><i class="bi bi-speedometer2"></i> Admin Control Panel</h1>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card primary shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title text-muted">Total Users</h5>
+                <h2 class="mb-0">{{ total_users }}</h2>
+                <p class="mb-0 small text-muted"><i class="bi bi-people"></i> Platform users</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card success shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title text-muted">Total Plumbers</h5>
+                <h2 class="mb-0">{{ total_plumbers }}</h2>
+                <p class="mb-0 small text-muted"><i class="bi bi-tools"></i> Service providers</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card warning shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title text-muted">Total Bookings</h5>
+                <h2 class="mb-0">{{ total_bookings }}</h2>
+                <p class="mb-0 small text-muted"><i class="bi bi-calendar-check"></i> All time</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card danger shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title text-muted">Fraud Alerts</h5>
+                <h2 class="mb-0">{{ fraud_alerts|length }}</h2>
+                <p class="mb-0 small text-muted"><i class="bi bi-exclamation-triangle"></i> Pending review</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-bar-chart-fill"></i> Booking Status Distribution</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="bookingStatusChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0"><i class="bi bi-pie-chart-fill"></i> Fraud Risk Distribution</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="fraudChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0"><i class="bi bi-star-fill"></i> Rating Distribution</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="ratingChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="bi bi-graph-up"></i> Platform Growth</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="growthChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Fraud Detection Model Metrics -->
+<div class="card mb-4 shadow-sm">
+    <div class="card-header bg-danger text-white">
+        <h5 class="mb-0"><i class="bi bi-shield-check"></i> Fraud Detection Model Performance</h5>
+    </div>
+    <div class="card-body">
+        {% if fraud_metrics %}
+        <div class="row text-center">
+            <div class="col-md-3 mb-3">
+                <div class="model-update-card p-3 rounded">
+                    <h2 class="text-success mb-0">{{ fraud_metrics.accuracy }}%</h2>
+                    <p class="mb-0 small">Accuracy</p>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="model-update-card p-3 rounded">
+                    <h2 class="text-primary mb-0">{{ fraud_metrics.precision }}%</h2>
+                    <p class="mb-0 small">Precision</p>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="model-update-card p-3 rounded">
+                    <h2 class="text-info mb-0">{{ fraud_metrics.recall }}%</h2>
+                    <p class="mb-0 small">Recall</p>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="model-update-card p-3 rounded">
+                    <h2 class="text-warning mb-0">{{ fraud_metrics.f1_score }}%</h2>
+                    <p class="mb-0 small">F1 Score</p>
+                </div>
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col-md-12">
+                <h6>Confusion Matrix:</h6>
+                <table class="table table-sm table-bordered">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>Predicted: Normal</th>
+                            <th>Predicted: Fraud</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Actual: Normal</strong></td>
+                            <td class="bg-success text-white">{{ fraud_metrics.true_negatives }} (TN)</td>
+                            <td class="bg-warning">{{ fraud_metrics.false_positives }} (FP)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Actual: Fraud</strong></td>
+                            <td class="bg-warning">{{ fraud_metrics.false_negatives }} (FN)</td>
+                            <td class="bg-success text-white">{{ fraud_metrics.true_positives }} (TP)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% else %}
+        <p class="text-muted text-center">Model metrics not available</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Fraud Alerts and Federated Learning -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0"><i class="bi bi-exclamation-triangle-fill"></i> Fraud Alerts</h5>
+            </div>
+            <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                {% if fraud_alerts %}
+                {% for alert in fraud_alerts %}
+                <div class="fraud-alert-{% if alert.risk_score > 70 %}high{% elif alert.risk_score > 40 %}medium{% else %}low{% endif %} p-3 mb-3 rounded">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="mb-1"><strong>{{ alert.alert_type.replace('_', ' ').title() }}</strong></h6>
+                            <p class="mb-1 small">{{ alert.description }}</p>
+                            <p class="mb-0 small text-muted">
+                                <i class="bi bi-clock"></i> {{ alert.flagged_at|to_ist }}
+                            </p>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-danger">Risk: {{ alert.risk_score|round|int }}%</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <p class="text-center text-muted mb-0">No pending fraud alerts</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-diagram-3-fill"></i> Federated Learning Status</h5>
+            </div>
+            <div class="card-body">
+                <div class="federated-learning-viz p-3">
+                    <div class="row text-center mb-3">
+                        <div class="col-6">
+                            <div class="model-update-card p-3 rounded">
+                                <h3 class="mb-0">{{ fl_stats.global_model_version }}</h3>
+                                <p class="mb-0 small">Global Model Version</p>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="model-update-card p-3 rounded">
+                                <h3 class="mb-0">{{ fl_stats.pending_updates }}</h3>
+                                <p class="mb-0 small">Pending Updates</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="alert alert-light mb-3">
+                        <strong>Min Updates Required:</strong> {{ fl_stats.min_updates_needed }}<br>
+                        <strong>Can Aggregate:</strong> 
+                        {% if fl_stats.can_aggregate %}
+                            <span class="badge bg-success">Yes</span>
+                        {% else %}
+                            <span class="badge bg-warning">No</span>
+                        {% endif %}
+                    </div>
+                    {% if global_model %}
+                    <div class="mb-3">
+                        <p class="mb-1"><strong>Active Model:</strong> Version {{ global_model.version }}</p>
+                        <p class="mb-1"><strong>Accuracy:</strong> {{ global_model.accuracy if global_model.accuracy else 'N/A' }}</p>
+                        <p class="mb-0"><strong>Updates Aggregated:</strong> {{ global_model.updates_aggregated }}</p>
+                    </div>
+                    {% endif %}
+                    <button class="btn btn-light w-100" onclick="aggregateUpdates()" {% if not fl_stats.can_aggregate %}disabled{% endif %}>
+                        <i class="bi bi-cpu"></i> Trigger Model Aggregation
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- All Reviews Section -->
+<div class="card mb-4 shadow-sm">
+    <div class="card-header bg-warning text-dark">
+        <h5 class="mb-0"><i class="bi bi-chat-quote-fill"></i> All Customer Reviews & Feedback</h5>
+    </div>
+    <div class="card-body" style="max-height: 500px; overflow-y: auto;">
+        {% if all_reviews %}
+        <div class="row">
+            {% for review in all_reviews %}
+            <div class="col-md-6 mb-3">
+                <div class="card border-warning">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="mb-0">{{ review.customer.name }}</h6>
+                            <div class="text-warning">
+                                {% for i in range(review.rating) %}
+                                <i class="bi bi-star-fill"></i>
+                                {% endfor %}
+                                {% for i in range(5 - review.rating) %}
+                                <i class="bi bi-star"></i>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <p class="small text-muted mb-2">
+                            <strong>Plumber:</strong> {{ review.plumber.user.name }} | 
+                            <strong>Service:</strong> {{ review.service_description[:30] }}...
+                        </p>
+                        {% if review.review %}
+                        <p class="mb-2">{{ review.review }}</p>
+                        {% else %}
+                        <p class="text-muted mb-2"><em>No written feedback</em></p>
+                        {% endif %}
+                        <p class="small text-muted mb-0">
+                            <i class="bi bi-calendar"></i> {{ review.created_at|to_ist }} | 
+                            <strong>Price:</strong> ${{ review.price }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-center text-muted mb-0">No reviews submitted yet</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Plumber Profiles -->
+<div class="card mb-4 shadow-sm">
+    <div class="card-header bg-success text-white">
+        <h5 class="mb-0"><i class="bi bi-tools"></i> All Plumber Profiles & Statistics</h5>
+    </div>
+    <div class="card-body">
+        {% if plumber_stats %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Plumber</th>
+                        <th>Specialty</th>
+                        <th>Location</th>
+                        <th>Hourly Rate</th>
+                        <th>Experience</th>
+                        <th>Bookings</th>
+                        <th>Completed</th>
+                        <th>Avg Rating</th>
+                        <th>Reviews</th>
+                        <th>Trust Score</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for stat in plumber_stats %}
+                    <tr>
+                        <td><strong>{{ stat.plumber.user.name }}</strong></td>
+                        <td>{{ stat.plumber.specialty }}</td>
+                        <td>{{ stat.plumber.location }}</td>
+                        <td>${{ stat.plumber.hourly_rate }}/hr</td>
+                        <td>{{ stat.plumber.experience_years }} years</td>
+                        <td><span class="badge bg-primary">{{ stat.total_bookings }}</span></td>
+                        <td><span class="badge bg-success">{{ stat.completed_bookings }}</span></td>
+                        <td>
+                            {% if stat.avg_rating > 0 %}
+                            <span class="text-warning">
+                                {{ stat.avg_rating }} <i class="bi bi-star-fill"></i>
+                            </span>
+                            {% else %}
+                            <span class="text-muted">N/A</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ stat.review_count }}</td>
+                        <td>
+                            <span class="badge {% if stat.trust_score >= 80 %}bg-success{% elif stat.trust_score >= 60 %}bg-info{% elif stat.trust_score >= 40 %}bg-warning{% else %}bg-danger{% endif %}">
+                                {{ stat.trust_score|round|int }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if stat.plumber.available %}
+                            <span class="badge bg-success">Available</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Unavailable</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-center text-muted mb-0">No plumbers registered yet</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Customer Profiles -->
+<div class="card mb-4 shadow-sm">
+    <div class="card-header bg-info text-white">
+        <h5 class="mb-0"><i class="bi bi-people-fill"></i> All Customer Profiles & Statistics</h5>
+    </div>
+    <div class="card-body">
+        {% if customer_stats %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Customer Name</th>
+                        <th>Email</th>
+                        <th>Total Bookings</th>
+                        <th>Completed Bookings</th>
+                        <th>Trust Score</th>
+                        <th>Member Since</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for stat in customer_stats %}
+                    <tr>
+                        <td><strong>{{ stat.customer.name }}</strong></td>
+                        <td>{{ stat.customer.email }}</td>
+                        <td><span class="badge bg-primary">{{ stat.total_bookings }}</span></td>
+                        <td><span class="badge bg-success">{{ stat.completed_bookings }}</span></td>
+                        <td>
+                            <span class="badge {% if stat.trust_score >= 80 %}bg-success{% elif stat.trust_score >= 60 %}bg-info{% elif stat.trust_score >= 40 %}bg-warning{% else %}bg-danger{% endif %}">
+                                {{ stat.trust_score|round|int }}
+                            </span>
+                        </td>
+                        <td>{{ stat.customer.created_at|to_ist }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-center text-muted mb-0">No customers registered yet</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Recent Bookings -->
+<div class="card shadow-sm">
+    <div class="card-header bg-secondary text-white">
+        <h5 class="mb-0"><i class="bi bi-clock-history"></i> Recent Bookings</h5>
+    </div>
+    <div class="card-body">
+        {% if recent_bookings %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Customer</th>
+                        <th>Plumber</th>
+                        <th>Service</th>
+                        <th>Status</th>
+                        <th>Price</th>
+                        <th>Rating</th>
+                        <th>Created</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for booking in recent_bookings %}
+                    <tr>
+                        <td>#{{ booking.id }}</td>
+                        <td>{{ booking.customer.name }}</td>
+                        <td>{{ booking.plumber.user.name }}</td>
+                        <td>{{ booking.service_description[:30] }}...</td>
+                        <td><span class="badge booking-status-{{ booking.status }}">{{ booking.status.upper() }}</span></td>
+                        <td>${{ booking.price }}</td>
+                        <td>
+                            {% if booking.rating %}
+                            <span class="text-warning">{{ booking.rating }} <i class="bi bi-star-fill"></i></span>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ booking.created_at|to_ist }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-center text-muted mb-0">No bookings yet</p>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+// eslint-disable
+/* Template variables are rendered server-side by Jinja2 */
+function aggregateUpdates() {
+    if (!confirm('Trigger federated learning aggregation?')) return;
+    
+    fetch('/api/federated/aggregate', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'}
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(`Aggregation successful!\nNew Version: ${data.new_version}\nUpdates Aggregated: ${data.updates_aggregated}`);
+            location.reload();
+        } else {
+            alert('Aggregation failed: ' + data.message);
+        }
+    });
+}
+
+// Booking Status Chart
+const statusCtx = document.getElementById('bookingStatusChart');
+if (statusCtx) {
+    new Chart(statusCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Pending', 'Accepted', 'Completed', 'Cancelled'],
+            datasets: [{
+                label: 'Bookings',
+                data: [{{ status_counts.pending|default(0) }}, {{ status_counts.accepted|default(0) }}, {{ status_counts.completed|default(0) }}, {{ status_counts.cancelled|default(0) }}],
+                backgroundColor: ['#ffc107', '#0dcaf0', '#198754', '#dc3545']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Booking Status Distribution'
+                }
+            }
+        }
+    });
+}
+
+// Fraud Risk Chart
+const fraudCtx = document.getElementById('fraudChart');
+if (fraudCtx) {
+    new Chart(fraudCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['No Risk', 'Low Risk', 'Medium Risk', 'High Risk'],
+            datasets: [{
+                data: [{{ fraud_risk_counts.no_risk|default(0) }}, {{ fraud_risk_counts.low|default(0) }}, {{ fraud_risk_counts.medium|default(0) }}, {{ fraud_risk_counts.high|default(0) }}],
+                backgroundColor: ['#198754', '#0dcaf0', '#ffc107', '#dc3545']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Fraud Risk Distribution'
+                }
+            }
+        }
+    });
+}
+
+// Rating Distribution Chart
+const ratingCtx = document.getElementById('ratingChart');
+if (ratingCtx) {
+    new Chart(ratingCtx, {
+        type: 'bar',
+        data: {
+            labels: ['5 Stars', '4 Stars', '3 Stars', '2 Stars', '1 Star'],
+            datasets: [{
+                label: 'Reviews',
+                data: [{{ rating_counts.get('5', 0) }}, {{ rating_counts.get('4', 0) }}, {{ rating_counts.get('3', 0) }}, {{ rating_counts.get('2', 0) }}, {{ rating_counts.get('1', 0) }}],
+                backgroundColor: '#ffc107'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Customer Rating Distribution'
+                }
+            }
+        }
+    });
+}
+
+// Platform Growth Chart
+const growthCtx = document.getElementById('growthChart');
+if (growthCtx) {
+    new Chart(growthCtx, {
+        type: 'line',
+        data: {
+            labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+            datasets: [{
+                label: 'Users',
+                data: [{{ (total_users|default(0))//4 }}, {{ (total_users|default(0))//2 }}, {{ (total_users|default(0))*3//4 }}, {{ total_users|default(0) }}],
+                borderColor: '#0d6efd',
+                backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                tension: 0.4
+            }, {
+                label: 'Bookings',
+                data: [{{ (total_bookings|default(0))//4 }}, {{ (total_bookings|default(0))//2 }}, {{ (total_bookings|default(0))*3//4 }}, {{ total_bookings|default(0) }}],
+                borderColor: '#198754',
+                backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Platform Growth Over Time'
+                }
+            }
+        }
+    });
+}
+</script>
+{% endblock %}

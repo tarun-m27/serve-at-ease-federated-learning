@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+
+{% block title %}Plumber Dashboard - Serve at Ease{% endblock %}
+
+{% block content %}
+<h1 class="mb-4"><i class="bi bi-tools"></i> Plumber Dashboard</h1>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card primary shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title text-muted">Total Bookings</h5>
+                <h2 class="mb-0">{{ bookings|length }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card success shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title text-muted">Trust Score</h5>
+                <h2 class="mb-0">{{ trust_score.overall_score if trust_score else 50 }}/100</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card warning shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title text-muted">Hourly Rate</h5>
+                <h2 class="mb-0">${{ plumber.hourly_rate }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card danger shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title text-muted">Availability</h5>
+                <h2 class="mb-0">
+                    {% if plumber.available %}
+                        <i class="bi bi-check-circle text-success"></i>
+                    {% else %}
+                        <i class="bi bi-x-circle text-danger"></i>
+                    {% endif %}
+                </h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-person-badge"></i> Your Profile</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Name:</strong> {{ current_user.name }}</p>
+                <p><strong>Email:</strong> {{ current_user.email }}</p>
+                <p><strong>Specialty:</strong> {{ plumber.specialty }}</p>
+                <p><strong>Location:</strong> {{ plumber.location }}</p>
+                <p><strong>Experience:</strong> {{ plumber.experience_years }} years</p>
+                <p class="mb-0"><strong>Bio:</strong> {{ plumber.bio if plumber.bio else 'Not provided' }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        {% if trust_score %}
+        <div class="card shadow-sm">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-shield-check"></i> Trust Score Analysis</h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-3">
+                    <div class="trust-score-badge {% if trust_score.overall_score >= 80 %}trust-excellent{% elif trust_score.overall_score >= 60 %}trust-good{% elif trust_score.overall_score >= 40 %}trust-fair{% elif trust_score.overall_score >= 20 %}trust-poor{% else %}trust-very-low{% endif %}">
+                        {{ trust_score.overall_score|round|int }}
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label fw-bold small">Completion Rate</label>
+                    <div class="progress">
+                        <div class="progress-bar bg-success" style="width: {{ trust_score.completion_rate }}%">{{ trust_score.completion_rate|round(1) }}%</div>
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label fw-bold small">Review Authenticity</label>
+                    <div class="progress">
+                        <div class="progress-bar bg-info" style="width: {{ trust_score.review_authenticity }}%">{{ trust_score.review_authenticity|round(1) }}%</div>
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label fw-bold small">Response Time</label>
+                    <div class="progress">
+                        <div class="progress-bar bg-primary" style="width: {{ trust_score.response_time_score }}%">{{ trust_score.response_time_score|round(1) }}%</div>
+                    </div>
+                </div>
+                <p class="mb-0 mt-3"><strong>Total Transactions:</strong> {{ trust_score.total_transactions }}</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-info text-white">
+        <h5 class="mb-0"><i class="bi bi-calendar-check"></i> Your Bookings</h5>
+    </div>
+    <div class="card-body">
+        {% if bookings %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Customer</th>
+                        <th>Service</th>
+                        <th>Scheduled</th>
+                        <th>Status</th>
+                        <th>Price</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for booking in bookings %}
+                    <tr>
+                        <td>#{{ booking.id }}</td>
+                        <td>{{ booking.customer.name }}</td>
+                        <td>{{ booking.service_description[:50] }}...</td>
+                        <td>{{ booking.scheduled_date|to_ist }}</td>
+                        <td><span class="badge booking-status-{{ booking.status }}">{{ booking.status.upper() }}</span></td>
+                        <td>${{ booking.price }}</td>
+                        <td>
+                            {% if booking.status == 'pending' %}
+                            <button class="btn btn-sm btn-success" onclick="handleBooking({{ booking.id }}, 'accept')">Accept</button>
+                            <button class="btn btn-sm btn-danger" onclick="handleBooking({{ booking.id }}, 'reject')">Reject</button>
+                            {% elif booking.status == 'accepted' %}
+                            <button class="btn btn-sm btn-primary" onclick="handleBooking({{ booking.id }}, 'complete')">Complete</button>
+                            <button class="btn btn-sm btn-warning" onclick="handleBooking({{ booking.id }}, 'reject')">Cancel Accepted</button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-center text-muted mb-0">No bookings yet. Keep your profile updated to attract customers!</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card mt-4 federated-learning-viz">
+    <div class="card-body">
+        <h5 class="mb-3"><i class="bi bi-diagram-3"></i> Federated Learning Participation</h5>
+        <p>As a plumber, your booking data helps improve the platform's fraud detection and trust scoring models through federated learning.</p>
+        <div class="row">
+            <div class="col-md-6 mb-2">
+                <div class="model-update-card p-3 rounded">
+                    <strong>Local Model Updates:</strong> Your device trains models locally
+                </div>
+            </div>
+            <div class="col-md-6 mb-2">
+                <div class="model-update-card p-3 rounded">
+                    <strong>Privacy Protected:</strong> Only encrypted updates are shared
+                </div>
+            </div>
+        </div>
+        <button class="btn btn-light mt-3" onclick="simulateFLUpdate()">
+            <i class="bi bi-cloud-upload"></i> Simulate Model Update Submission
+        </button>
+    </div>
+</div>
+
+<script>
+function handleBooking(bookingId, action) {
+    const actionText = action === 'accept' ? 'accept' : action === 'reject' ? 'reject' : 'mark as completed';
+    
+    if (!confirm(`Are you sure you want to ${actionText} this booking?`)) {
+        return;
+    }
+    
+    fetch(`/api/bookings/${bookingId}/${action}`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'}
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        alert('An error occurred: ' + error);
+    });
+}
+
+function simulateFLUpdate() {
+    const weights = Array.from({length: 10}, () => Math.random() * 2 - 1);
+    const numSamples = Math.floor(Math.random() * 50) + 10;
+    
+    fetch('/api/federated/submit-update', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            weights: weights,
+            num_samples: numSamples
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(`Model update submitted successfully!\nPending updates: ${data.stats.pending_updates}\nCan aggregate: ${data.stats.can_aggregate}`);
+        }
+    });
+}
+</script>
+{% endblock %}
