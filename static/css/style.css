@@ -197,6 +197,16 @@ footer {
     color: #6b7280 !important;
 }
 
+.form-text {
+    color: var(--bs-body-color) !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: #9ca3af;
+    opacity: 1;
+}
+
 .table {
     color: var(--bs-body-color);
 }
@@ -221,10 +231,46 @@ footer {
     background-color: rgba(0, 0, 0, 0.05);
 }
 
-.list-group-item {
+list-group-item {
     background-color: var(--bs-card-bg);
     color: var(--bs-body-color);
     border-color: var(--bs-border-color);
+}
+
+/* Book Service modal – dark theme visibility fixes */
+:root[data-theme="dark"] .modal-content {
+    background-color: #020617;
+    color: var(--bs-body-color);
+    border-color: #1f2937;
+}
+
+:root[data-theme="dark"] .modal-header,
+:root[data-theme="dark"] .modal-footer {
+    border-color: #1f2937;
+}
+
+:root[data-theme="dark"] .form-label {
+    color: var(--bs-body-color);
+}
+
+:root[data-theme="dark"] .form-control,
+:root[data-theme="dark"] .form-select {
+    background-color: #020617;
+    color: var(--bs-body-color);
+    border-color: #4b5563;
+}
+
+:root[data-theme="dark"] .form-control:focus,
+:root[data-theme="dark"] .form-select:focus {
+    background-color: #020617;
+    color: var(--bs-body-color);
+    border-color: var(--bs-primary);
+    box-shadow: 0 0 0 0.1rem rgba(37, 99, 235, 0.5);
+}
+
+:root[data-theme="dark"] #priceHint,
+:root[data-theme="dark"] #bookingPlumberName {
+    color: var(--bs-body-color) !important;
 }
 
 .plumber-card {
