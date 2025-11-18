@@ -182,6 +182,10 @@
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
                             <h6 class="mb-1"><strong>{{ alert.alert_type.replace('_', ' ').title() }}</strong></h6>
+                            <p class="mb-1 small">
+                                <strong>Customer:</strong> {{ alert.user.name if alert.user else 'Unknown' }}<br>
+                                <strong>Plumber:</strong> {{ alert.plumber.user.name if alert.plumber and alert.plumber.user else 'Unknown' }}
+                            </p>
                             <p class="mb-1 small">{{ alert.description }}</p>
                             <p class="mb-0 small text-muted">
                                 <i class="bi bi-clock"></i> {{ alert.flagged_at|to_ist }}
@@ -280,7 +284,7 @@
                         {% endif %}
                         <p class="small text-muted mb-0">
                             <i class="bi bi-calendar"></i> {{ review.created_at|to_ist }} | 
-                            <strong>Price:</strong> ${{ review.price }}
+                            <strong>Price:</strong> ₹{{ review.price }}
                         </p>
                     </div>
                 </div>
@@ -323,7 +327,7 @@
                         <td><strong>{{ stat.plumber.user.name }}</strong></td>
                         <td>{{ stat.plumber.specialty }}</td>
                         <td>{{ stat.plumber.location }}</td>
-                        <td>${{ stat.plumber.hourly_rate }}/hr</td>
+                        <td>₹{{ stat.plumber.hourly_rate }}/hr</td>
                         <td>{{ stat.plumber.experience_years }} years</td>
                         <td><span class="badge bg-primary">{{ stat.total_bookings }}</span></td>
                         <td><span class="badge bg-success">{{ stat.completed_bookings }}</span></td>
@@ -339,7 +343,7 @@
                         <td>{{ stat.review_count }}</td>
                         <td>
                             <span class="badge {% if stat.trust_score >= 80 %}bg-success{% elif stat.trust_score >= 60 %}bg-info{% elif stat.trust_score >= 40 %}bg-warning{% else %}bg-danger{% endif %}">
-                                {{ stat.trust_score|round|int }}
+                                {{ stat.trust_score|round(2) }}
                             </span>
                         </td>
                         <td>
@@ -388,7 +392,7 @@
                         <td><span class="badge bg-success">{{ stat.completed_bookings }}</span></td>
                         <td>
                             <span class="badge {% if stat.trust_score >= 80 %}bg-success{% elif stat.trust_score >= 60 %}bg-info{% elif stat.trust_score >= 40 %}bg-warning{% else %}bg-danger{% endif %}">
-                                {{ stat.trust_score|round|int }}
+                                {{ stat.trust_score|round(2) }}
                             </span>
                         </td>
                         <td>{{ stat.customer.created_at|to_ist }}</td>
@@ -432,7 +436,7 @@
                         <td>{{ booking.plumber.user.name }}</td>
                         <td>{{ booking.service_description[:30] }}...</td>
                         <td><span class="badge booking-status-{{ booking.status }}">{{ booking.status.upper() }}</span></td>
-                        <td>${{ booking.price }}</td>
+                        <td>₹{{ booking.price }}</td>
                         <td>
                             {% if booking.rating %}
                             <span class="text-warning">{{ booking.rating }} <i class="bi bi-star-fill"></i></span>

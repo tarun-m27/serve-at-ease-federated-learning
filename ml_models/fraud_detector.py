@@ -53,13 +53,11 @@ class FraudDetector:
         """Detect if booking shows fraudulent patterns"""
         features = self.extract_features(booking_data)
         
+        # If the ML model is not trained yet, fall back to a
+        # lightweight, rule-based detector so core fraud types
+        # (including price manipulation) still work.
         if not self.is_trained:
-            return {
-                'is_fraud': False,
-                'risk_score': 0.0,
-                'fraud_type': 'none',
-                'description': 'Model not yet trained'
-            }
+            return self._rule_based_detection(booking_data)
         
         try:
             features_scaled = self.scaler.transform(features)
@@ -85,6 +83,54 @@ class FraudDetector:
                 'description': f'Error in detection: {str(e)}'
             }
     
+    def _rule_based_detection(self, booking_data):
+        """Simple heuristic-based detection used when model isn't trained.
+
+        This keeps key fraud types (especially price manipulation)
+        working out of the box before an ML model is trained.
+        """
+        price_dev = booking_data.get('price_deviation_from_avg', 0) or 0
+        customer_cancel_rate = booking_data.get('customer_cancellation_rate', 0) or 0
+        plumber_cancel_rate = booking_data.get('plumber_cancellation_rate', 0) or 0
+        time_to_booking = booking_data.get('time_to_booking_hours', 24) or 24
+        
+        fraud_type = 'none'
+        risk_score = 0.0
+        
+        # 1) Price manipulation: strong emphasis on deviation from average
+        #    - >= 3σ: clearly abnormal pricing → high risk
+        #    - 2–3σ: suspicious pricing → medium risk
+        if price_dev >= 3:
+            fraud_type = 'price_manipulation'
+            risk_score = 80.0
+        elif price_dev >= 2:
+            fraud_type = 'price_manipulation'
+            risk_score = 55.0
+        # 2) Fake bookings: very high customer cancellation rate
+        elif customer_cancel_rate > 0.5:
+            fraud_type = 'fake_booking'
+            risk_score = 65.0
+        # 3) Rush booking scam: extremely short notice
+        elif time_to_booking < 1:
+            fraud_type = 'rush_booking_scam'
+            risk_score = 60.0
+        # 4) Suspicious pattern: plumber also cancels a lot
+        elif plumber_cancel_rate > 0.5:
+            fraud_type = 'suspicious_pattern'
+            risk_score = 50.0
+        else:
+            fraud_type = 'none'
+            risk_score = 10.0
+        
+        is_fraud = fraud_type != 'none' and risk_score >= 30
+        
+        return {
+            'is_fraud': is_fraud,
+            'risk_score': round(risk_score, 2),
+            'fraud_type': fraud_type,
+            'description': self._get_fraud_description(fraud_type, booking_data)
+        }
+    
     def _determine_fraud_type(self, booking_data, risk_score):
         """Determine the type of fraud based on features"""
         if risk_score < 30:
@@ -103,7 +149,7 @@ class FraudDetector:
         """Get human-readable description of fraud type"""
         descriptions = {
             'none': 'No fraudulent activity detected',
-            'price_manipulation': f'Price ${booking_data.get("price", 0)} significantly deviates from market average',
+'price_manipulation': f'Price ₹{booking_data.get("price", 0)} significantly deviates from market average',
             'fake_booking': f'High cancellation rate ({booking_data.get("customer_cancellation_rate", 0)*100:.1f}%) suggests fake bookings',
             'rush_booking_scam': 'Unusually short booking notice time indicates potential scam',
             'suspicious_pattern': 'Anomalous booking pattern detected',

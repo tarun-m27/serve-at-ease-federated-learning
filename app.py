@@ -272,17 +272,50 @@ def create_booking():
     db.session.add(booking)
     db.session.commit()
     
+    # --- Build rich feature set for fraud detection ---
+    # Historical booking counts
+    customer_total_bookings = Booking.query.filter_by(customer_id=current_user.id).count()
+    plumber_total_bookings = Booking.query.filter_by(plumber_id=plumber.id).count()
+
+    # Historical cancellation rates
+    customer_cancelled = Booking.query.filter_by(customer_id=current_user.id, status='cancelled').count()
+    plumber_cancelled = Booking.query.filter_by(plumber_id=plumber.id, status='cancelled').count()
+
+    customer_cancellation_rate = (customer_cancelled / customer_total_bookings) if customer_total_bookings else 0.0
+    plumber_cancellation_rate = (plumber_cancelled / plumber_total_bookings) if plumber_total_bookings else 0.0
+
+    # Time to booking in hours from now
+    now_utc = datetime.utcnow()
+    time_to_booking_hours = max(0.0, (booking.scheduled_date - now_utc).total_seconds() / 3600.0)
+
+    # Price deviation from plumber's typical hourly rate.
+    # This drives price manipulation detection in the fraud engine.
+    baseline_price = plumber.hourly_rate or 0.0
+    price_dev = 0.0
+    if baseline_price > 0 and booking.price is not None:
+        ratio = float(booking.price) / float(baseline_price)
+        if ratio >= 3.0:
+            price_dev = 3.0
+        elif ratio >= 2.0:
+            price_dev = 2.0
+        else:
+            # small positive number when price modestly above typical rate
+            price_dev = max(0.0, ratio - 1.0)
+
     booking_data = {
         'price': booking.price,
-        'customer_total_bookings': Booking.query.filter_by(customer_id=current_user.id).count(),
-        'plumber_total_bookings': Booking.query.filter_by(plumber_id=plumber.id).count(),
-        'customer_cancellation_rate': 0.1,
-        'plumber_cancellation_rate': 0.05,
-        'time_to_booking_hours': 24,
-        'price_deviation_from_avg': 0
+        'customer_total_bookings': customer_total_bookings,
+        'plumber_total_bookings': plumber_total_bookings,
+        'customer_cancellation_rate': customer_cancellation_rate,
+        'plumber_cancellation_rate': plumber_cancellation_rate,
+        'time_to_booking_hours': time_to_booking_hours,
+        'price_deviation_from_avg': price_dev
     }
     
     fraud_result = fraud_detector.detect_anomaly(booking_data)
+
+    # Convenience flag for frontend messaging when rule-based price deviation was high
+    rule_price_deviation = price_dev >= 2.0
     
     if fraud_result['is_fraud'] and fraud_result['risk_score'] > 60:
         fraud_alert = FraudAlert(
@@ -296,7 +329,12 @@ def create_booking():
         db.session.add(fraud_alert)
         db.session.commit()
     
-    return jsonify({'success': True, 'booking_id': booking.id, 'fraud_check': fraud_result})
+    return jsonify({
+        'success': True,
+        'booking_id': booking.id,
+        'fraud_check': fraud_result,
+        'rule_price_deviation': rule_price_deviation
+    })
 
 @app.route('/api/trust-score/<int:user_id>')
 @login_required

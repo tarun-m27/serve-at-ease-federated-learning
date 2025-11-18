@@ -93,6 +93,7 @@ class FraudAlert(db.Model):
     resolved_at = db.Column(db.DateTime)
     
     user = db.relationship('User', backref='fraud_alerts')
+    plumber = db.relationship('Plumber', backref='fraud_alerts')
     
     def __repr__(self):
         return f'<FraudAlert {self.id} - {self.alert_type} - Risk: {self.risk_score}>'

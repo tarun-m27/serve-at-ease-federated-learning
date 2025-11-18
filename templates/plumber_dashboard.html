@@ -18,7 +18,7 @@
         <div class="card stat-card success shadow-sm">
             <div class="card-body">
                 <h5 class="card-title text-muted">Trust Score</h5>
-                <h2 class="mb-0">{{ trust_score.overall_score if trust_score else 50 }}/100</h2>
+                <h2 class="mb-0">{{ trust_score.overall_score|round(2) if trust_score else 50.00 }}/100</h2>
             </div>
         </div>
     </div>
@@ -26,7 +26,7 @@
         <div class="card stat-card warning shadow-sm">
             <div class="card-body">
                 <h5 class="card-title text-muted">Hourly Rate</h5>
-                <h2 class="mb-0">${{ plumber.hourly_rate }}</h2>
+                <h2 class="mb-0">₹{{ plumber.hourly_rate }}</h2>
             </div>
         </div>
     </div>
@@ -72,7 +72,7 @@
             <div class="card-body">
                 <div class="text-center mb-3">
                     <div class="trust-score-badge {% if trust_score.overall_score >= 80 %}trust-excellent{% elif trust_score.overall_score >= 60 %}trust-good{% elif trust_score.overall_score >= 40 %}trust-fair{% elif trust_score.overall_score >= 20 %}trust-poor{% else %}trust-very-low{% endif %}">
-                        {{ trust_score.overall_score|round|int }}
+                        {{ trust_score.overall_score|round(2) }}
                     </div>
                 </div>
                 <div class="mb-2">
@@ -127,7 +127,7 @@
                         <td>{{ booking.service_description[:50] }}...</td>
                         <td>{{ booking.scheduled_date|to_ist }}</td>
                         <td><span class="badge booking-status-{{ booking.status }}">{{ booking.status.upper() }}</span></td>
-                        <td>${{ booking.price }}</td>
+                        <td>₹{{ booking.price }}</td>
                         <td>
                             {% if booking.status == 'pending' %}
                             <button class="btn btn-sm btn-success" onclick="handleBooking({{ booking.id }}, 'accept')">Accept</button>

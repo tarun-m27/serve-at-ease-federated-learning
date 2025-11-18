@@ -52,8 +52,8 @@ The AI model examines **7 critical features**:
 
 **Example:**
 ```
-Average plumbing service: $100
-Suspicious booking: $500
+Average plumbing service: ₹100
+Suspicious booking: ₹500
 → FRAUD ALERT: Price Manipulation
 ```
 
@@ -98,7 +98,7 @@ Time to booking: 0.5 hours
 **Example:**
 ```
 - New customer (1st booking)
-- High price ($400)
+- High price (₹400)
 - Same-day booking
 - No reviews/ratings
 → FRAUD ALERT: Suspicious Pattern
@@ -134,7 +134,7 @@ Time to booking: 0.5 hours
 
 1. Login as **customer1@example.com**
 2. Book a plumber
-3. Enter price: **$999** (very high)
+3. Enter price: **₹999** (very high)
 4. Service description: "Fix tap"
 5. Submit booking
 6. **Result:** Fraud alert appears in admin dashboard
@@ -146,7 +146,7 @@ Time to booking: 0.5 hours
 1. Login as customer
 2. Book a plumber
 3. Schedule date: **Today, 1 hour from now**
-4. Price: $200
+4. Price: ₹200
 5. Submit booking
 6. **Result:** Rush booking scam detected
 
@@ -155,7 +155,7 @@ Time to booking: 0.5 hours
 ### Test Case 3: New User Suspicious Activity
 
 1. **Register a brand new customer**
-2. Immediately book expensive service ($500+)
+2. Immediately book expensive service (₹500+)
 3. Schedule for same day
 4. **Result:** Multiple red flags trigger high-risk alert
 
@@ -174,7 +174,7 @@ Customer: John Doe
 
 Booking Details:
 - Service: "Fix leaking pipe"
-- Price: $120 (market avg: $100-150)
+- Price: ₹120 (market avg: ₹100-150)
 - Scheduled: 3 days from now
 - Plumber: Experienced (4.5 stars)
 
@@ -199,7 +199,7 @@ Customer: Fake User
 
 Booking Details:
 - Service: "Emergency fix"
-- Price: $850 (market avg: $100-150) ⚠️
+- Price: ₹850 (market avg: ₹100-150) ⚠️
 - Scheduled: 30 minutes from now ⚠️
 - Plumber: New provider (no reviews)
 
